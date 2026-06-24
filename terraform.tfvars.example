@@ -1,0 +1,4 @@
+project_id  = "gen-lang-client-0520086142"
+region      = "us-central1" # Must be us-west1, us-central1, or us-east1 for Free Tier.
+database_id = "my-firestore-database"
+database_type = "FIRESTORE_NATIVE"
