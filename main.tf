@@ -4,9 +4,9 @@ provider "google" {
 }
 
 resource "google_firestore_database" "database" {
-  name       = var.database_id
+  name        = var.database_id
   location_id = var.region
-  type       = var.database_type
+  type        = var.database_type
 
   delete_protection_state = "DELETE_PROTECTION_DISABLED"
 }
