@@ -92,15 +92,30 @@ To stay within the free tier, ensure your usage does not exceed:
 
 Reference this repository as a Terraform module in your own configurations:
 
-```hcl
-module "firestore_db" {
-  source = "github.com/marcuwynu23/terraform-gcp-firestore?ref=main"
-
-  project_id  = var.project_id
-  region      = "us-central1"
-  database_id = "my-app-firestore"
-}
-```
+> **Option 1**: Terraform Registry (recommended)
+> ```hcl
+> module "db-firestore" {
+>   source  = "marcuwynu23/db-firestore/gcp"
+>   version = "1.0.0"
+>
+>   project_id    = var.project_id
+>   region        = "us-central1"
+>   database_id   = "my-app-firestore"
+>   database_type = "FIRESTORE_NATIVE"
+> }
+> ```
+>
+> **Option 2**: GitHub source
+> ```hcl
+> module "db-firestore" {
+>   source = "github.com/marcuwynu23/terraform-gcp-firestore?ref=main"
+>
+>   project_id    = var.project_id
+>   region        = "us-central1"
+>   database_id   = "my-app-firestore"
+>   database_type = "FIRESTORE_NATIVE"
+> }
+> ```
 
 Then use the outputs in your configuration:
 
