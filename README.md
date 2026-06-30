@@ -52,6 +52,24 @@ To stay within the free tier, ensure your usage does not exceed:
 
 1.  **Google Cloud SDK**: [Installed and initialized](https://cloud.google.com/sdk/docs/install).
 2.  **Terraform**: [Installed](https://developer.hashicorp.com/terraform/downloads).
+3.  **Enable the Firestore API** in your GCP project:
+
+    ```bash
+    gcloud services enable firestore.googleapis.com
+    ```
+
+4.  **Ensure the authenticating identity has the required IAM role**. The `roles/editor` role is **not sufficient**. One of the following roles is required:
+    - `roles/datastore.owner` (Cloud Datastore Owner)
+    - `roles/firestore.admin` (Firestore Admin)
+
+    If your project requires conditions on IAM bindings, add the role with a condition:
+
+    ```bash
+    gcloud projects add-iam-policy-binding PROJECT_ID \
+      --member="serviceAccount:YOUR_SA_EMAIL" \
+      --role="roles/datastore.owner" \
+      --condition="expression=request.time < timestamp('2027-01-01T00:00:00Z'),title=tf-firestore-access"
+    ```
 
 ## Setup & Deployment
 
@@ -96,9 +114,34 @@ To stay within the free tier, ensure your usage does not exceed:
    gcloud services enable firestore.googleapis.com
    ```
 
-2. **Create a service account** with the `Cloud Datastore Owner` role and generate a JSON key:
-   - GCP Console → IAM & Admin → Service Accounts → Create Service Account
-   - Grant role: **Cloud Datastore Owner**
+2. **Create a service account** with the required role and generate a JSON key:
+
+   The `roles/editor` role is **not sufficient**. You must grant one of:
+   - `roles/datastore.owner` (Cloud Datastore Owner)
+   - `roles/firestore.admin` (Firestore Admin)
+
+   Using the gcloud CLI:
+   ```bash
+   gcloud iam service-accounts create tf-firestore-sa \
+     --display-name="Terraform Firestore SA"
+
+   gcloud projects add-iam-policy-binding PROJECT_ID \
+     --member="serviceAccount:tf-firestore-sa@PROJECT_ID.iam.gserviceaccount.com" \
+     --role="roles/datastore.owner"
+   ```
+
+   > If your project requires conditions on IAM bindings, append:
+   > `--condition="expression=request.time < timestamp('2027-01-01T00:00:00Z'),title=tf-firestore-access"`
+
+   Generate a JSON key:
+   ```bash
+   gcloud iam service-accounts keys create key.json \
+     --iam-account=tf-firestore-sa@PROJECT_ID.iam.gserviceaccount.com
+   ```
+
+   Or via the GCP Console:
+   - IAM & Admin → Service Accounts → Create Service Account
+   - Grant role: **Cloud Datastore Owner** (add a condition if required by org policy)
    - Keys → Add Key → Create New Key → JSON
    - Copy the entire JSON file contents
 
