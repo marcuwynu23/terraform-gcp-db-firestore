@@ -88,11 +88,52 @@ To stay within the free tier, ensure your usage does not exceed:
 4.  **Outputs**:
     After a successful deployment, Terraform will output the database details.
 
+## CI/CD Setup (GitHub Actions)
+
+1. **Enable the Firestore API** in your GCP project:
+
+   ```bash
+   gcloud services enable firestore.googleapis.com
+   ```
+
+2. **Create a service account** with the `Cloud Datastore Owner` role and generate a JSON key:
+   - GCP Console → IAM & Admin → Service Accounts → Create Service Account
+   - Grant role: **Cloud Datastore Owner**
+   - Keys → Add Key → Create New Key → JSON
+   - Copy the entire JSON file contents
+
+3. **Add a GitHub secret** named `GCP_SA_KEY` containing the full JSON key from step 2:
+   - GitHub repo → Settings → Secrets and variables → Actions → New repository secret
+   - Name: `GCP_SA_KEY`
+   - Value: (paste the entire JSON contents)
+
+4. **Create a GCS bucket** for Terraform remote state (if not already created):
+
+   ```bash
+   gcloud storage buckets create gs://your-terraform-state-bucket \
+     --location=us-central1 \
+     --uniform-bucket-level-access
+   ```
+
+5. **Add GitHub Secrets** for backend state bucket:
+
+   | Secret Name        | Value                                                      |
+   | ------------------ | ---------------------------------------------------------- |
+   | `TF_BUCKET_NAME`   | Your GCS bucket name (e.g., `your-terraform-state-bucket`) |
+   | `TF_BUCKET_PREFIX` | Bucket prefix/path (e.g., `terraform-gcp-cloud-sql`)       |
+
+6. **Run the workflow**:
+   - **Apply**: Go to Actions → **CD - Terraform Apply** → fill in all inputs
+   - **Destroy**: Go to Actions → **CD - Terraform Destroy** → fill in essential inputs only
+
+> Alternatively, create a `backend.tfvars` from `backend.tfvars.example` and reference it with `terraform init -backend-config="backend.tfvars"` for local use.
+
 ## Usage as a Module
 
 Reference this repository as a Terraform module in your own configurations:
 
 > **Option 1**: Terraform Registry (recommended)
+>
 > ```hcl
 > module "db-firestore" {
 >   source  = "marcuwynu23/db-firestore/gcp"
@@ -106,6 +147,7 @@ Reference this repository as a Terraform module in your own configurations:
 > ```
 >
 > **Option 2**: GitHub source
+>
 > ```hcl
 > module "db-firestore" {
 >   source = "github.com/marcuwynu23/terraform-gcp-firestore?ref=main"
@@ -150,56 +192,3 @@ resource "google_cloud_run_v2_service" "app" {
 | `database_name`     | Name of the created Firestore database |
 | `database_id`       | ID of the created Firestore database   |
 | `database_location` | Location of the Firestore database     |
-
-## Resources Created
-
-- `google_firestore_database.database` – Firestore database (Native or Datastore Mode)
-## CI/CD Setup (GitHub Actions)
-
-### Prerequisites
-1. **Create a GCS bucket** for Terraform remote state:
-    ```bash
-    gcloud storage buckets create gs://your-terraform-state-bucket \
-      --location=us-central1 \
-      --uniform-bucket-level-access
-    ```
-
-2. **Create a service account** with necessary permissions and generate a JSON key:
-    - GCP Console → IAM & Admin → Service Accounts → Create Service Account
-    - Grant the required roles for this module
-    - Keys → Add Key → Create New Key → JSON
-    - Copy the entire JSON file contents
-
-3. **Add GitHub secrets**:
-
-    | Secret Name | Value |
-    |---|---|
-    | `GCP_SA_KEY` | Full JSON key from step 2 |
-    | `TF_BUCKET_NAME` | Your GCS bucket name |
-    | `TF_BUCKET_PREFIX` | Bucket prefix/path (e.g., `gcp-db-firestore`) |
-
-4. **Run the workflow**:
-    - **Apply**: Go to Actions → **CD - GCP Firestore Database (Apply)** → fill in all inputs
-    - **Destroy**: Go to Actions → **CD - GCP Firestore Database (Destroy)** → fill in essential inputs
-
-> Alternatively, create a `backend.tfvars` from `backend.tfvars.example` and run `terraform init -backend-config="backend.tfvars"` for local use.
-
-## Remote State (GCS Backend)
-
-This module uses Google Cloud Storage (GCS) as the Terraform backend for remote state management:
-
-```hcl
-terraform {
-  backend "gcs" {
-    bucket = "your-terraform-state-bucket"
-    prefix = "gcp-db-firestore"
-  }
-}
-```
-
-Create a `backend.tfvars` file based on `backend.tfvars.example` and initialize:
-
-```bash
-terraform init -backend-config="backend.tfvars"
-```
-
