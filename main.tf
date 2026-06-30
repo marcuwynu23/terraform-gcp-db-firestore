@@ -9,4 +9,5 @@ resource "google_firestore_database" "database" {
   type        = var.database_type
 
   delete_protection_state = "DELETE_PROTECTION_DISABLED"
+  deletion_policy         = "DELETE"
 }
