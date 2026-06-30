@@ -2,7 +2,28 @@ name: CD - GCP Firestore Database (Destroy)
 
 on:
   workflow_dispatch:
+    inputs:
 
+      project_id:
+        description: GCP project ID
+        required: true
+        type: string
+
+      region:
+        description: "GCP region (Free Tier: us-west1, us-central1, us-east1)"
+        required: true
+        type: string
+        default: us-central1
+
+      database_id:
+        description: database id
+        required: true
+        type: string
+
+      database_type:
+        description: database type
+        required: true
+        type: string
 
 env:
   TF_BUCKET_NAME: ${{ secrets.TF_BUCKET_NAME }}
@@ -29,7 +50,15 @@ jobs:
           -backend-config="prefix=$TF_BUCKET_PREFIX"
     - name: Terraform Plan
       run: |
-        terraform plan -destroy
+        terraform plan -destroy  \
+          -var="project_id=${{ github.event.inputs.project_id }}" \
+          -var="region=${{ github.event.inputs.region }}" \
+          -var="database_id=${{ github.event.inputs.database_id }}" \
+          -var="database_type=${{ github.event.inputs.database_type }}"
     - name: Terraform Destroy
       run: |
-        terraform destroy -auto-approve
+        terraform destroy -auto-approve  \
+          -var="project_id=${{ github.event.inputs.project_id }}" \
+          -var="region=${{ github.event.inputs.region }}" \
+          -var="database_id=${{ github.event.inputs.database_id }}" \
+          -var="database_type=${{ github.event.inputs.database_type }}"
